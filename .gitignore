@@ -1,3 +1,4 @@
 # Exclude template parameter files
 *.param.json
 azuredeploy.param.json
+*.ps1
