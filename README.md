@@ -1,5 +1,3 @@
-# AzureVM
-
 ## Universal Azure VM Deployment
 
 This project is a series of linked ARM templates that can be deployed manually when required or via automated provisioning systems to produce a broad range of commonly required Azure IaaS VM configurations utilising features such as:
