@@ -774,7 +774,7 @@
     "strLatestStorageApi": "[providers('Microsoft.Storage','storageAccounts').apiVersions[0]]",
     "mainResourceGroup": "[resourceGroup().name]",
     "true": true,
-    "templateLink": "[concat('https://raw.githubusercontent.com/jvta/AzureVM/',parameters('strBranch'))]",
+    "templateLink": "[concat('https://raw.githubusercontent.com/sarquiss/AzureAutomation/',parameters('strBranch'))]",
     "nicName": "[concat(parameters('strVmName'),'-nic1')]",
     "pipName": "[concat(parameters('strVmName'),'-PIP')]",
     "backupFabric": "Azure",
