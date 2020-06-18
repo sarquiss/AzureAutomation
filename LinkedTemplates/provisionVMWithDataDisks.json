@@ -1,5 +1,5 @@
 {
-  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
     "strLocation": {
@@ -593,7 +593,7 @@
               "storageAccountType": "[if(equals(parameters('boolRebuildFromDisks'),variables('true')),json('null'),parameters('strOsDiskStorageType'))]",
               "id": "[if(equals(parameters('boolRebuildFromDisks'),variables('true')),resourceId('Microsoft.Compute/disks',parameters('strExistingOSDiskName')),json('null'))]",
             },
-            "caching": "[if(equals(parameters('boolRebuildFromDisks'),variables('true')),json('null'),'ReadWrite')]",
+            "caching": "[if(equals(parameters('boolRebuildFromDisks'),variables('true')),json('null'),'ReadWrite')]"
           },
           "copy": [
             {
@@ -868,7 +868,23 @@
             "typeHandlerVersion": "1.4",
             "autoUpgradeMinorVersion": true
           }
-        }
+        },
+        {
+          "condition": "[equals(parameters('strOsPlatform'), 'Linux')]",          
+          "type": "Microsoft.Compute/virtualMachines/extensions",
+          "name": "[concat(parameters('strVmName'),'/', 'AADLoginForLinux')]",
+          "apiVersion": "2019-03-01",
+          "location": "[parameters('strLocation')]",
+          "dependsOn": [
+            "[resourceId('Microsoft.Compute/virtualMachines', parameters('strVmName'))]"
+          ],
+          "properties": {
+            "publisher": "Microsoft.Azure.ActiveDirectory.LinuxSSH",
+            "type": "AADLoginForLinux",
+            "typeHandlerVersion": "1.0",
+            "autoUpgradeMinorVersion": true
+          }
+        }        
       ]
     }
   ],
