@@ -1,0 +1,55 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "strApiVersion": {
+            "type": "string",
+            "metadata": {
+                "description": "API version for this resource"
+            }
+        },
+        "strAvSetName": {
+            "type": "string",
+            "metadata": {
+                "description": "Name of the resource"
+            }
+        },
+        "strLocation": {
+            "type": "string",
+            "metadata": {
+                "description": "Location to create the resource"
+            }
+        },
+        "strTags": {
+            "type": "string",
+            "metadata": {
+                "description": "Tags to attach to resource"
+            }
+        }
+    },
+    "variables": {
+        "tagsBase64": "[base64(parameters('strTags'))]"
+    },
+    "resources": [
+        {
+            "type": "Microsoft.Compute/availabilitySets",
+            "sku": {
+                "name": "Aligned"
+            },
+            "name": "[parameters('strAvSetName')]",
+            "apiVersion": "[parameters('strApiVersion')]",
+            "location": "[parameters('strLocation')]",
+            "tags": "[base64ToJson(variables('tagsBase64'))]",
+            "properties": {
+                "platformUpdateDomainCount": 5,
+                "platformFaultDomainCount": 2
+            }
+        }
+    ],
+    "outputs": {
+        "resourceID": {
+            "type": "string",
+            "value": "[resourceId('Microsoft.Compute/availabilitySets', parameters('strAvSetName'))]"
+        }
+    }
+}

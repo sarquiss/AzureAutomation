@@ -1,0 +1,1213 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "strLocation": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "group": "VM Configuration",
+        "description": "The region to deploy the resources into. Only change this if resources need to be deployed to a different location than the resource group."
+      }
+    },
+    "strVmName": {
+      "type": "string",
+      "metadata": {
+        "group": "VM Configuration",
+        "description": "Specify the name of the VM meeting your naming standards."
+      }
+    },
+    "boolRebuildFromDisks": {
+      "defaultValue": false,
+      "type": "bool",
+      "metadata": {
+        "group": "VM Configuration",
+        "description": "Whether to build this VM from existing disks or create from an image. Default is false which implies build a new VM from an image"
+      }
+    },
+    "strExistingOSDiskName":{
+      "defaultValue": "PreviousOSDiskName-IfRebuildingFromDisks",
+      "type": "string",
+      "metadata": {
+        "group": "VM Configuration",
+        "description": "If rebuilding a VM from existing disks, provide the OS disk name here. Ensure this disk (and any associated data disks) is present in the Resource Group you are building in"
+      }
+    },
+    "strVmSize": {
+      "type": "string",
+      "defaultValue": "Standard_DS2_v2",
+      "metadata": {
+        "group": "VM Configuration",
+        "description": "Specify the size of the VM required. Specify in the format of the supplied default value"
+      }
+    },
+    "boolAvSetRequired": {
+      "type": "bool",
+      "defaultValue": false,
+      "metadata": {
+        "group": "VM Configuration",
+        "description": "Whether this server should belong to an Availability Set. Allowed values are true or false"
+      }
+    },
+    "boolAvSetCreateNew": {
+      "type": "bool",
+      "defaultValue": false,
+      "metadata": {
+        "group": "VM Configuration",
+        "description": "Whether a new AV Set should be created. Allowed values are true or false"
+      }
+    },
+    "strAvSetName": {
+      "defaultValue": "",
+      "type": "string",
+      "metadata": {
+        "group": "VM Configuration",
+        "description": "Specify the name of the Availability Set, if required"
+      }
+    },
+    "intVmOsDiskSize": {
+      "defaultValue": 128,
+      "type": "int",
+      "metadata": {
+        "group": "VM Configuration",
+        "description": "The size of the VM OS Disk in GB. Windows default of 128GB is provided, otherwise specify an appropriate size for your OS and image"
+      }
+    },
+    "strOsDiskStorageType": {
+      "type": "string",
+      "defaultValue": "StandardSSD_LRS",
+      "metadata": {
+        "group": "VM Configuration",
+        "description": "The type of disk storage to use for OS Disk. Accepted values are Standard_LRS, StandardSSD_LRS or Premium_LRS"
+      },
+      "allowedValues": [
+        "Standard_LRS",
+        "StandardSSD_LRS",
+        "Premium_LRS"
+      ]
+    },
+    "boolAddDataDisks": {
+      "type": "bool",
+      "defaultValue": false,
+      "metadata": {
+        "group": "VM Configuration",
+        "description": "Whether the VM will require data disks. If selecting true, add all data disk details required to array in next parameter objDataDisks as needed."
+      }
+    },
+    "objDataDisks": {
+      "type": "object",
+      "defaultValue": {
+        "disks": [
+          {
+            "Cache": "None",
+            "Size": 1024,
+            "StorageAccountType": "Standard_LRS"
+          }
+        ]
+      },
+      "metadata": {
+        "group": "VM Configuration",
+        "description": "The details of all data disks to attach to the VM in array format. Leave default data if you do not want any data disks and simply select false for boolAddDataDisks"
+      }
+    },
+    "strOsPlatform": {
+      "defaultValue": "Windows",
+      "type": "string",
+      "metadata": {
+        "group": "VM OS & Image Selection",
+        "description": "Select the OS platform type to be provisioned. Options are Windows or Linux. Default is Windows"
+      },
+      "allowedValues": [
+        "Windows",
+        "Linux"
+      ]
+    },
+    "strImage": {
+      "defaultValue": "WindowsServer",
+      "type": "string",
+      "metadata": {
+        "group": "VM OS & Image Selection",
+        "description": "Select either a default OS platform image to be provisioned or choose Custom to provide image details. Default is WindowsServer. If you select Custom, you must also provide strPublisher, strOffer, strSku and strVersion"
+      },
+      "allowedValues": [
+        "WindowsServer",
+        "Windows10",
+        "Linux",
+        "Custom"
+      ]
+    },
+    "strPublisher": {
+      "type": "string",
+      "defaultValue": "MicrosoftWindowsServer",
+      "metadata": {
+        "group": "VM OS & Image Selection",
+        "description": "The publisher of the image to use"
+      }
+    },
+    "strOffer": {
+      "type": "string",
+      "defaultValue": "WindowsServer",
+      "metadata": {
+        "group": "VM OS & Image Selection",
+        "description": "The offer from the selected publisher to select for image to use"
+      }
+    },
+    "strSku": {
+      "type": "string",
+      "defaultValue": "2016-Datacenter",
+      "metadata": {
+        "group": "VM OS & Image Selection",
+        "description": "The SKU of the selected offer and publisher to select for image to use"
+      }
+    },
+    "strVersion": {
+      "type": "string",
+      "defaultValue": "latest",
+      "metadata": {
+        "group": "VM OS & Image Selection",
+        "description": "The version of the selected SKU to use"
+      }
+    },
+    "strCustomData": {
+      "type": "string",
+      "defaultValue": "null",
+      "metadata": {
+        "group": "VM OS & Image Selection",
+        "description": "Custom Data may contain code passed to Linux VMs upon provision for initial configuration e.g. cloud-init scripts"
+      }
+    },
+    "boolRequirePublicIp": {
+      "type": "bool",
+      "defaultValue": false,
+      "metadata": {
+        "group": "Network Configuration",
+        "description": "Whether this server should attach a Public IP to the primary NIC or only use a Private IP"
+      }
+    },
+    "strPublicIpAllocationType": {
+      "defaultValue": "Static",
+      "type": "string",
+      "metadata": {
+        "group": "Network Configuration",
+        "description": "Specify whether the public IP should be Static or Dynamic"
+      },
+      "allowedValues": [
+        "Static",
+        "Dynamic"
+      ]
+    },
+    "strPublicIpSku": {
+      "defaultValue": "Standard",
+      "type": "string",
+      "metadata": {
+        "group": "Network Configuration",
+        "description": "Specify the SKU of the public IP address"
+      },
+      "allowedValues": [
+        "Standard",
+        "Basic"
+      ]
+    },
+    "strPrivateIpAllocationType": {
+      "defaultValue": "Dynamic",
+      "type": "string",
+      "metadata": {
+        "group": "Network Configuration",
+        "description": "Specify whether the private IP should be Static or Dynamic"
+      },
+      "allowedValues": [
+        "Static",
+        "Dynamic"
+      ]
+    },
+    "strPrivateIpAddress": {
+      "defaultValue": "ChangeIfNotUsingDynamic",
+      "type": "string",
+      "metadata": {
+        "group": "Network Configuration",
+        "description": "A static private IP address to be used"
+      }
+    },
+    "boolEnableAcceleratedNetworking": {
+      "defaultValue": false,
+      "type": "bool",
+      "metadata": {
+        "group": "Network Configuration",
+        "description": "Specify whether the NIC should have Accelerated Networking enabled"
+      }
+    },
+    "boolAttachNetworkSecurityGroup": {
+      "defaultValue": false,
+      "type": "bool",
+      "metadata": {
+        "group": "Network Configuration",
+        "description": "Specify whether the NIC should have an NSG attached"
+      }
+    },
+    "strNetworkSecurityGroupName": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "group": "Network Configuration",
+        "description": "Name of an NSG to attach to the NIC"
+      }
+    },
+    "strNetworkSecurityGroupRGName": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().name]",
+      "metadata": {
+        "group": "Network Configuration",
+        "description": "Name of the Resource Group containing the NSG to attach to the NIC"
+      }
+    },
+    "boolJoinLoadBalancer": {
+      "defaultValue": false,
+      "type": "bool",
+      "metadata": {
+        "group": "Network Configuration",
+        "description": "Whether the NIC should belong to a Load Balancer Backend Pool. Default is false"
+      }
+    },
+    "strLoadBalancerName": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "group": "Network Configuration",
+        "description": "Name of an Azure Load Balancer to attach to the NIC"
+      }
+    },
+    "strLoadBalancerRGName": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().name]",
+      "metadata": {
+        "group": "Network Configuration",
+        "description": "Name of the Resource Group containing the Load Balancer to join"
+      }
+    },
+    "strLoadBalancerBackendPoolName": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "group": "Network Configuration",
+        "description": "Name of the Backend Pool of the Load Balancer to join"
+      }
+    },
+    "boolUseHybridUseBenefit": {
+      "type": "bool",
+      "defaultValue": false,
+      "metadata": {
+        "group": "VM Configuration",
+        "description": "Whether this server should use Hybrid Use Benefit licencing. Default is false"
+      }
+    },
+    "strTimeZone": {
+      "type": "string",
+      "defaultValue": "AUS Eastern Standard Time",
+      "metadata": {
+        "group": "VM Configuration",
+        "description": "Timezone to use for this server. Default is AUS Eastern Standard Time"
+      }
+    },
+    "strAdminUsername": {
+      "type": "string",
+      "metadata": {
+        "group": "VM Configuration",
+        "description": "Specify the username of the Administrator account"
+      }
+    },
+    "strAuthenticationType": {
+      "defaultValue": "Password",
+      "type": "string",
+      "metadata": {
+        "group": "VM Configuration",
+        "description": "Authentication type for the deployment"
+      },
+      "allowedValues": [
+        "Password",
+        "SSH-Public-Key"
+      ]
+    },
+    "sstrAdminPasswordOrKey": {
+      "type": "securestring",
+      "metadata": {
+        "group": "VM Configuration",
+        "description": "OS Admin password or SSH Key depending on value of authentication type"
+      }
+    },
+    "strVirtualNetworkName": {
+      "type": "string",
+      "metadata": {
+        "group": "Network Configuration",
+        "description": "Name of the Virtual Network"
+      }
+    },
+    "strVirtualNetworkRGName": {
+      "type": "string",
+      "metadata": {
+        "group": "Network Configuration",
+        "description": "Specify the name of the Resource Group where the vNet resides"
+      }
+    },
+    "strSubnetName": {
+      "type": "string",
+      "metadata": {
+        "group": "Network Configuration",
+        "description": "Specify the name of the Subnet"
+      }
+    },
+    "boolUseBootDiagnostics": {
+      "type": "bool",
+      "defaultValue": false,
+      "metadata": {
+        "group": "VM Configuration",
+        "description": "Whether this server should configure Boot Diagnostics against a storage account"
+      }
+    },
+    "boolNewDiagnosticsStorage": {
+      "type": "bool",
+      "defaultValue": false,
+      "metadata": {
+        "group": "VM Configuration",
+        "description": "Whether a new storage account should be created for Diagnostics data"
+      }
+    },
+    "strDiagnosticsStorageAccountName": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "group": "VM Configuration",
+        "description": "Storage Account name to use for storing boot diagnostics data"
+      }
+    },
+    "strDiagnosticsStorageAccountType": {
+      "type": "string",
+      "defaultValue": "Standard_LRS",
+      "allowedValues": [
+        "Standard_LRS",
+        "StandardSSD_LRS",
+        "Standard_GRS",
+        "Premium_LRS"
+      ],
+      "metadata": {
+        "group": "VM Configuration",
+        "description": "Storage account type to be used with Diagnostics"
+      }
+    },
+    "boolBackupRequired": {
+      "type": "bool",
+      "defaultValue": false,
+      "metadata": {
+        "group": "VM Configuration",
+        "description": "Whether this server should be added to a Recovery Services Vault for Azure backup"
+      }
+    },
+    "strVaultName": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "group": "VM Configuration",
+        "description": "The Recovery Services Vault to which this server should be joined"
+      }
+    },
+    "strVaultResourceGroup": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "group": "VM Configuration",
+        "description": "The Resource Group containing the Recovery Services Vault to which this server should be joined"
+      }
+    },
+    "strBackupPolicyName": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "group": "VM Configuration",
+        "description": "The Backup Policy that should be applied to this server"
+      }
+    },
+    "boolUseDomainJoinExtension": {
+      "type": "bool",
+      "defaultValue": false,
+      "metadata": {
+        "group": "Extension Configuration",
+        "description": "Whether this server should be Active Directory domain joined"
+      }
+    },
+    "strDomainToJoin": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "group": "Extension Configuration",
+        "description": "The DNS name of the domain to which this server should be joined"
+      }
+    },
+    "strOuPath": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "group": "Extension Configuration",
+        "description": "The Organisational Unit into which server should be placed in the chosen domain in canonical format. E.g. OU=Servers,DC=domain,DC=local"
+      }
+    },
+    "strDomainJoinAccount": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "group": "Extension Configuration",
+        "description": "The domain account to use for joining the domain"
+      }
+    },
+    "sstrDomainJoinAccountPassword": {
+      "type": "securestring",
+      "defaultValue": "",
+      "metadata": {
+        "group": "Extension Configuration",
+        "description": "The domain account password for domain join"
+      }
+    },
+    "boolUseAzureAutomationDSCExtension": {
+      "type": "bool",
+      "defaultValue": false,
+      "metadata": {
+        "group": "Extension Configuration",
+        "description": "Whether this server should use the Azure Automation State Configuration Agent Extension"
+      }
+    },
+    "boolUseCustomisedDSCExtension": {
+      "type": "bool",
+      "defaultValue": false,
+      "metadata": {
+        "group": "Extension Configuration",
+        "description": "Whether this server should use the customised PowerShell DSC Agent Extension"
+      }
+    },
+    "boolUseGenericDSCExtension": {
+      "type": "bool",
+      "defaultValue": false,
+      "metadata": {
+        "group": "Extension Configuration",
+        "description": "Whether this server should use the Generic PowerShell DSC Agent Extension"
+      }
+    },
+    "sstrAutomationAccountRegistrationKey": {
+      "type": "securestring",
+      "defaultValue": "",
+      "metadata": {
+        "group": "Extension Configuration",
+        "description": "Registration Key for Azure Automation Account to enrol against. Use only with Azure Automation DSC extension"
+      }
+    },
+    "strAutomationAccountRegistrationUrl": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "group": "Extension Configuration",
+        "description": "Registration URL for Azure Automation Account to enrol against. Use only with Azure Automation DSC extension"
+      }
+    },
+    "strNodeConfiguration": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "group": "Extension Configuration",
+        "description": "Used only with the Azure Automation DSC Extension. Specify the name of the Azure Automation Node Configuration to enrol the VM against. NOTE: it will always be the Configuration followed by a period . and either localhost or a specific computer name."
+      }
+    },
+    "strArtifactsLocation": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "group": "Extension Configuration",
+        "description": "Base URI of DSC artifacts required"
+      }
+    },
+    "strDscExtensionArchiveFolder": {
+      "type": "string",
+      "defaultValue": "windows-powershell-dsc",
+      "metadata": {
+        "group": "Extension Configuration",
+        "description": "Container or folder name that hosts the configuration archive file. Default is windows-powershell-dsc"
+      }
+    },
+    "strDscExtensionArchiveFileName": {
+      "type": "string",
+      "defaultValue": "configuration.ps1.zip",
+      "metadata": {
+        "group": "Extension Configuration",
+        "description": "Name of the Archive file that DSC will reference. E.g. configuration.ps1.zip is default"
+      }
+    },
+    "strDscScript": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "group": "Extension Configuration",
+        "description": "The DSC Script filename to use. E.g. configuration.ps1 is default"
+      }
+    },
+    "strDscExtensionUpdateTagVersion": {
+      "type": "string",
+      "defaultValue": "1",
+      "metadata": {
+        "group": "Extension Configuration",
+        "description": "The current extension revision number. Increment by one with each update to ensure targets refresh their DSC settings"
+      }
+    },
+    "strDscFunction": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "group": "Extension Configuration",
+        "description": "Specify the name of the DSC function to execute within your DSC configuration file"
+      }
+    },
+    "sstrArtifactsLocationSasToken": {
+      "type": "securestring",
+      "defaultValue": "",
+      "metadata": {
+        "group": "Extension Configuration",
+        "description": "Azure blob SAS token for access to the DSC extension file. Set to empty if not required e.g. if using public GitHub repository location"
+      }
+    },
+    "sstrStorageUserName": {
+      "type": "securestring",
+      "defaultValue": "",
+      "metadata": {
+        "group": "Extension Configuration",
+        "description": "A Customised DSC Extension parameter. The name of a storage account where the DSC related tools downloads are stored for this environment"
+      }
+    },
+    "sstrStoragePassword": {
+      "type": "securestring",
+      "defaultValue": "",
+      "metadata": {
+        "group": "Extension Configuration",
+        "description": "A Customised DSC Extension parameter. The access key for the storage account where the DSC related tools downloads are saved for this environment"
+      }
+    },
+    "strLocalAccountUserName": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "group": "Extension Configuration",
+        "description": "A Customised DSC Extension parameter. Name of additional local user account to be added to local Administrators Group"
+      }
+    },
+    "sstrLocalAccountUserPassword": {
+      "type": "securestring",
+      "defaultValue": "",
+      "metadata": {
+        "group": "Extension Configuration",
+        "description": "A Customised DSC Extension parameter. Password of additional local user account to be added to local Administrators Group"
+      }
+    },
+    "boolUseBGInfoExtension": {
+      "type": "bool",
+      "defaultValue": true,
+      "metadata": {
+        "group": "Extension Configuration",
+        "description": "Whether this server should use the BGInfo Extension"
+      }
+    },
+    "boolUseOMSExtension": {
+      "type": "bool",
+      "defaultValue": false,
+      "metadata": {
+        "group": "Extension Configuration",
+        "description": "Whether this server should use the OMS Agent Extension"
+      }
+    },
+    "strOmsWorkspaceId": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "group": "Extension Configuration",
+        "description": "OMS Workspace ID to connect to"
+      }
+    },
+    "sstrOmsWorkspaceKey": {
+      "type": "securestring",
+      "defaultValue": "",
+      "metadata": {
+        "group": "Extension Configuration",
+        "description": "Primary Key of the OMS Workspace selected"
+      }
+    },
+    "strOmsProxyUri": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "group": "Extension Configuration",
+        "description": "OMS Proxy URI and port if required. E.g. 10.0.0.100:8080"
+      }
+    },
+    "boolUseAutoShutdownExtension": {
+      "type": "bool",
+      "defaultValue": true,
+      "metadata": {
+        "group": "Extension Configuration",
+        "description": "Whether this server should use the Auto Shutdown Extension"
+      }
+    },
+    "strShutdownStart": {
+      "type": "string",
+      "defaultValue": "1900",
+      "metadata": {
+        "group": "Extension Configuration",
+        "description": "Time to initiate shutdown in 24 hour clock notation e.g. 1900 for 7pm. Extension will use the timezone parameter to offset against UTC time"
+      }
+    },
+    "boolUseAntiMalwareExtension": {
+      "type": "bool",
+      "defaultValue": false,
+      "metadata": {
+        "description": "Whether this server should use the Anti Malware Extension"
+      }
+    },
+    "strAntiMalwarePathExclusions": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "The file or folder paths to be excluded from Anti Malware scans. Use a semi-colon separated list. Wildcards not advised."
+      }
+    },
+    "strAntiMalwareFileExtensionExclusions": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "The file extensions to be excluded from Anti Malware scans. Use a semi-colon separated list. Wildcards not advised."
+      }
+    },
+    "strAntiMalwareProcessExclusions": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "The processes to be excluded from Anti Malware scans. Use a semi-colon separated list. Wildcards not supported."
+      }
+    },
+    "strAntiMalwareRealtimeProtectionEnabled": {
+      "type": "string",
+      "defaultValue": "true",
+      "metadata": {
+        "description": "Whether this server should use Anti Malware Real Time Protection"
+      },
+      "allowedValues": [
+        "true",
+        "false"
+      ]
+    },
+    "strAntiMalwareScheduledScanEnabled": {
+      "type": "string",
+      "defaultValue": "true",
+      "metadata": {
+        "description": "Whether this server should conduct Anti Malware Scans"
+      },
+      "allowedValues": [
+        "true",
+        "false"
+      ]
+    },
+    "strAntiMalwareScanType": {
+      "type": "string",
+      "metadata": {
+        "description": "The type of Anti Malware Scan to perform - choose from Quick or Full"
+      },
+      "defaultValue": "Quick",
+      "allowedValues": [
+        "Quick",
+        "Full"
+      ]
+    },
+    "intAntiMalwareScanDay": {
+      "type": "int",
+      "metadata": {
+        "description": "The day on which to run the Anti Malware Scheduled Scan. Sunday = 1; Monday = 2; Tuesday = 3; Wednesday = 4; Thursday = 5; Friday = 6; Saturday = 7. Default is Sunday"
+      },
+      "defaultValue": 1,
+      "allowedValues": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7
+      ]
+    },
+    "intAntiMalwareScanTime": {
+      "type": "int",
+      "defaultValue": 0,
+      "metadata": {
+        "description": "The time at which the Anti Malware Scheduled Scan should be run in minutes from midnight. E.g. 60 = 1AM; 360 = 6AM"
+      }
+    },
+    "boolUseNetworkWatcherExtension": {
+      "type": "bool",
+      "defaultValue": false,
+      "metadata": {
+        "description": "Whether this server should use the Network Watcher Extension"
+      }
+    },
+    "strBranch": {
+      "type": "string",
+      "defaultValue": "master",
+      "metadata": {
+        "description": "Code branch for template testing. Default is master. Supply alternate development branch name only if required"
+      }
+    },
+    "strTags": {
+      "type": "string",
+      "defaultValue": "{\"Appplication\":\"Test\",\"Environment\":\"Test\"}",
+      "metadata": {
+        "description": "List of tag data in string form to be passed to each resource. View Readme for formatting"
+      }
+    }
+  },
+  "variables": {
+    "networkApiVersion": "2018-07-01",
+    "computeApiVersion": "2018-04-01",
+    "extensionApiVersion": "2015-06-15",
+    "vaultApiVersion": "2016-06-01",
+    "deploymentApiVersion": "2015-01-01",
+    "nestedDeploymentApiVersion": "2017-05-10",
+    "autoShutdownApiVersion": "2018-09-15",
+    "strLatestStorageApi": "[providers('Microsoft.Storage','storageAccounts').apiVersions[0]]",
+    "mainResourceGroup": "[resourceGroup().name]",
+    "true": true,
+    "templateLink": "[concat('https://raw.githubusercontent.com/jvta/AzureVM/',parameters('strBranch'))]",
+    "nicName": "[concat(parameters('strVmName'),'-nic1')]",
+    "pipName": "[concat(parameters('strVmName'),'-PIP')]",
+    "backupFabric": "Azure",
+    "protectionContainer": "[concat('iaasvmcontainer;iaasvmcontainerv2;', resourceGroup().name, ';', parameters('strVmName'))]",
+    "protectedItem": "[concat('vm;iaasvmcontainerv2;', resourceGroup().name, ';', parameters('strVmName'))]",
+    "emptyString": ""
+  },
+  "resources": [
+    {
+      "condition": "[and(parameters('boolAvSetCreateNew'),parameters('boolAvSetRequired'))]",
+      "type": "Microsoft.Resources/deployments",
+      "name": "provisionAvSet",
+      "apiVersion": "[variables('deploymentApiVersion')]",
+      "dependsOn": [
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[concat(variables('templateLink'),'/','LinkedTemplates/provisionAVSet.json')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "strLocation": {
+            "value": "[parameters('strLocation')]"
+          },
+          "strApiVersion": {
+            "value": "[variables('computeApiVersion')]"
+          },
+          "strAvSetName": {
+            "value": "[parameters('strAvSetName')]"
+          },
+          "strTags": {
+            "value": "[parameters('strTags')]"
+          }
+        }
+      }
+    },
+    {
+      "condition": "[and(parameters('boolRequirePublicIp'),variables('true'))]",
+      "type": "Microsoft.Resources/deployments",
+      "name": "provisionPublicIp",
+      "apiVersion": "[variables('deploymentApiVersion')]",
+      "dependsOn": [
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[concat(variables('templateLink'),'/','LinkedTemplates/provisionPIP.json')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "strLocation": {
+            "value": "[parameters('strLocation')]"
+          },
+          "strApiVersion": {
+            "value": "[variables('networkApiVersion')]"
+          },
+          "strName": {
+            "value": "[variables('pipName')]"
+          },
+          "strPublicIpAllocationType": {
+            "value": "[parameters('strPublicIpAllocationType')]"
+          },
+          "strPublicIpSku": {
+            "value": "[parameters('strPublicIpSku')]"
+          },
+          "strTags": {
+            "value": "[parameters('strTags')]"
+          }
+        }
+      }
+    },
+    {
+      "name": "provisionNetworkInterface",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "[variables('deploymentApiVersion')]",
+      "dependsOn": [
+        "Microsoft.Resources/deployments/provisionPublicIp"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[concat(variables('templateLink'),'/LinkedTemplates/','provisionNIC',if(parameters('boolRequirePublicIp'),'Public','Private'),'.json')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "strLocation": {
+            "value": "[parameters('strLocation')]"
+          },
+          "strTags": {
+            "value": "[parameters('strTags')]"
+          },
+          "strPipId": {
+            "value": "[if(parameters('boolRequirePublicIp'), reference('provisionPublicIp').outputs.resourceID.value, 'None')]"
+          },
+          "strNicName": {
+            "value": "[variables('nicName')]"
+          },
+          "strNetworkApiVersion": {
+            "value": "[variables('networkApiVersion')]"
+          },
+          "strVirtualNetworkName": {
+            "value": "[parameters('strVirtualNetworkName')]"
+          },
+          "strVirtualNetworkRGName": {
+            "value": "[parameters('strVirtualNetworkRGName')]"
+          },
+          "strSubnetName": {
+            "value": "[parameters('strSubnetName')]"
+          },
+          "strPrivateIpAddress": {
+            "value": "[parameters('strPrivateIpAddress')]"
+          },
+          "strPrivateIpAllocationType": {
+            "value": "[parameters('strPrivateIpAllocationType')]"
+          },
+          "boolEnableAcceleratedNetworking": {
+            "value": "[parameters('boolEnableAcceleratedNetworking')]"
+          },
+          "boolAttachNetworkSecurityGroup": {
+            "value": "[parameters('boolAttachNetworkSecurityGroup')]"
+          },
+          "strNetworkSecurityGroupName": {
+            "value": "[parameters('strNetworkSecurityGroupName')]"
+          },
+          "strNetworkSecurityGroupRGName": {
+            "value": "[parameters('strNetworkSecurityGroupRGName')]"
+          },
+          "boolJoinLoadBalancer": {
+            "value": "[parameters('boolJoinLoadBalancer')]"
+          },
+          "strLoadBalancerName": {
+            "value": "[parameters('strLoadBalancerName')]"
+          },
+          "strLoadBalancerRGName": {
+            "value": "[parameters('strLoadBalancerRGName')]"
+          },
+          "strLoadBalancerBackendPoolName": {
+            "value": "[parameters('strLoadBalancerBackendPoolName')]"
+          }
+        }
+      }
+    },
+    {
+      "condition": "[and(parameters('boolNewDiagnosticsStorage'),variables('true'))]",
+      "type": "Microsoft.Resources/deployments",
+      "name": "provisionDiagnosticsStorage",
+      "apiVersion": "[variables('deploymentApiVersion')]",
+      "dependsOn": [
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[concat(variables('templateLink'),'/','LinkedTemplates/provisionStorageAccount.json')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "strLocation": {
+            "value": "[parameters('strLocation')]"
+          },
+          "strApiVersion": {
+            "value": "[variables('strLatestStorageApi')]"
+          },
+          "strDiagnosticsStorageAccountName": {
+            "value": "[parameters('strDiagnosticsStorageAccountName')]"
+          },
+          "strDiagnosticsStorageAccountType": {
+            "value": "[parameters('strDiagnosticsStorageAccountType')]"
+          },
+          "strTags": {
+            "value": "[parameters('strTags')]"
+          }
+        }
+      }
+    },
+    {
+      "name": "provisionCompute",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "[variables('deploymentApiVersion')]",
+      "dependsOn": [
+        "Microsoft.Resources/deployments/provisionNetworkInterface",
+        "Microsoft.Resources/deployments/provisionAvSet",
+        "Microsoft.Resources/deployments/provisionDiagnosticsStorage"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[concat(variables('templateLink'),'/LinkedTemplates/provisionVM',if(parameters('boolAddDataDisks'),'WithDataDisks','NoDataDisks'),'.json')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "strLocation": {
+            "value": "[parameters('strLocation')]"
+          },
+          "strVmName": {
+            "value": "[parameters('strVmName')]"
+          },
+          "boolRebuildFromDisks": {
+            "value": "[parameters('boolRebuildFromDisks')]"
+          },
+          "strExistingOSDiskName": {
+            "value": "[parameters('strExistingOSDiskName')]"
+          },
+          "strVmSize": {
+            "value": "[parameters('strVmSize')]"
+          },
+          "strTags": {
+            "value": "[parameters('strTags')]"
+          },
+          "strNicName": {
+            "value": "[variables('nicName')]"
+          },
+          "strComputeApiVersion": {
+            "value": "[variables('computeApiVersion')]"
+          },
+          "strExtensionApiVersion": {
+            "value": "[variables('extensionApiVersion')]"
+          },
+          "strAdminUsername": {
+            "value": "[parameters('strAdminUsername')]"
+          },
+          "boolAvSetRequired": {
+            "value": "[parameters('boolAvSetRequired')]"
+          },
+          "strAvSetName": {
+            "value": "[if(parameters('boolAvSetRequired'), parameters('strAvSetName'), variables('emptyString'))]"
+          },
+          "intVmOsDiskSize": {
+            "value": "[parameters('intVmOsDiskSize')]"
+          },
+          "strOsDiskStorageType": {
+            "value": "[parameters('strOsDiskStorageType')]"
+          },
+          "objDataDisks": {
+            "value": "[parameters('objDataDisks')]"
+          },
+          "strOsPlatform": {
+            "value": "[parameters('strOsPlatform')]"
+          },
+          "strImage": {
+            "value": "[parameters('strImage')]"
+          },
+          "strPublisher": {
+            "value": "[parameters('strPublisher')]"
+          },
+          "strOffer": {
+            "value": "[parameters('strOffer')]"
+          },
+          "strSku": {
+            "value": "[parameters('strSku')]"
+          },
+          "strVersion": {
+            "value": "[parameters('strVersion')]"
+          },
+          "strCustomData": {
+            "value": "[parameters('strCustomData')]"
+          },
+          "strTimeZone": {
+            "value": "[parameters('strTimeZone')]"
+          },
+          "boolUseHybridUseBenefit": {
+            "value": "[parameters('boolUseHybridUseBenefit')]"
+          },
+          "strAuthenticationType": {
+            "value": "[parameters('strAuthenticationType')]"
+          },
+          "sstrAdminPasswordOrKey": {
+            "value": "[parameters('sstrAdminPasswordOrKey')]"
+          },
+          "boolUseBootDiagnostics": {
+            "value": "[parameters('boolUseBootDiagnostics')]"
+          },
+          "strDiagnosticsStorageAccountName": {
+            "value": "[parameters('strDiagnosticsStorageAccountName')]"
+          },
+          "boolUseDomainJoinExtension": {
+            "value": "[parameters('boolUseDomainJoinExtension')]"
+          },
+          "strDomainToJoin": {
+            "value": "[parameters('strDomainToJoin')]"
+          },
+          "strOuPath": {
+            "value": "[parameters('strOuPath')]"
+          },
+          "strDomainJoinAccount": {
+            "value": "[parameters('strDomainJoinAccount')]"
+          },
+          "sstrDomainJoinAccountPassword": {
+            "value": "[parameters('sstrDomainJoinAccountPassword')]"
+          },
+          "boolUseAzureAutomationDSCExtension": {
+            "value": "[parameters('boolUseAzureAutomationDSCExtension')]"
+          },
+          "boolUseCustomisedDSCExtension": {
+            "value": "[parameters('boolUseCustomisedDSCExtension')]"
+          },
+          "boolUseGenericDSCExtension": {
+            "value": "[parameters('boolUseGenericDSCExtension')]"
+          },
+          "sstrAutomationAccountRegistrationKey": {
+            "value": "[parameters('sstrAutomationAccountRegistrationKey')]"
+          },
+          "strAutomationAccountRegistrationUrl": {
+            "value": "[parameters('strAutomationAccountRegistrationUrl')]"
+          },
+          "strNodeConfiguration": {
+            "value": "[parameters('strNodeConfiguration')]"
+          },
+          "strArtifactsLocation": {
+            "value": "[parameters('strArtifactsLocation')]"
+          },
+          "strDscExtensionArchiveFolder": {
+            "value": "[parameters('strDscExtensionArchiveFolder')]"
+          },
+          "strDscExtensionArchiveFileName": {
+            "value": "[parameters('strDscExtensionArchiveFileName')]"
+          },
+          "strDscScript": {
+            "value": "[parameters('strDscScript')]"
+          },
+          "strDscExtensionUpdateTagVersion": {
+            "value": "[parameters('strDscExtensionUpdateTagVersion')]"
+          },
+          "strDscFunction": {
+            "value": "[parameters('strDscFunction')]"
+          },
+          "sstrArtifactsLocationSasToken": {
+            "value": "[parameters('sstrArtifactsLocationSasToken')]"
+          },
+          "sstrStorageUserName": {
+            "value": "[parameters('sstrStorageUserName')]"
+          },
+          "sstrStoragePassword": {
+            "value": "[parameters('sstrStoragePassword')]"
+          },
+          "strLocalAccountUserName": {
+            "value": "[parameters('strLocalAccountUserName')]"
+          },
+          "sstrLocalAccountUserPassword": {
+            "value": "[parameters('sstrLocalAccountUserPassword')]"
+          },
+          "boolUseBGInfoExtension": {
+            "value": "[parameters('boolUseBGInfoExtension')]"
+          },
+          "boolUseOMSExtension": {
+            "value": "[parameters('boolUseOMSExtension')]"
+          },
+          "strOmsWorkspaceId": {
+            "value": "[parameters('strOmsWorkspaceId')]"
+          },
+          "sstrOmsWorkspaceKey": {
+            "value": "[parameters('sstrOmsWorkspaceKey')]"
+          },
+          "strOmsProxyUri": {
+            "value": "[parameters('strOmsProxyUri')]"
+          },
+          "boolUseAutoShutdownExtension": {
+            "value": "[parameters('boolUseAutoShutdownExtension')]"
+          },
+          "strAutoShutdownApiVersion": {
+            "value": "[variables('autoShutdownApiVersion')]"
+          },
+          "strShutdownStart": {
+            "value": "[parameters('strShutdownStart')]"
+          },
+          "boolUseAntiMalwareExtension": {
+            "value": "[parameters('boolUseAntiMalwareExtension')]"
+          },
+          "strAntiMalwarePathExclusions": {
+            "value": "[parameters('strAntiMalwarePathExclusions')]"
+          },
+          "strAntiMalwareFileExtensionExclusions": {
+            "value": "[parameters('strAntiMalwareFileExtensionExclusions')]"
+          },
+          "strAntiMalwareProcessExclusions": {
+            "value": "[parameters('strAntiMalwareProcessExclusions')]"
+          },
+          "strAntiMalwareRealtimeProtectionEnabled": {
+            "value": "[parameters('strAntiMalwareRealtimeProtectionEnabled')]"
+          },
+          "strAntiMalwareScheduledScanEnabled": {
+            "value": "[parameters('strAntiMalwareScheduledScanEnabled')]"
+          },
+          "strAntiMalwareScanType": {
+            "value": "[parameters('strAntiMalwareScanType')]"
+          },
+          "intAntiMalwareScanDay": {
+            "value": "[parameters('intAntiMalwareScanDay')]"
+          },
+          "intAntiMalwareScanTime": {
+            "value": "[parameters('intAntiMalwareScanTime')]"
+          },
+          "boolUseNetworkWatcherExtension": {
+            "value": "[parameters('boolUseNetworkWatcherExtension')]"
+          }
+        }
+      }
+    },
+    {
+      "condition": "[and(parameters('boolBackupRequired'),variables('true'))]",
+      "name": "nestedBackupDeployment",
+      "apiVersion": "[variables('nestedDeploymentApiVersion')]",
+      "type": "Microsoft.Resources/deployments",
+      "dependsOn": [
+        "Microsoft.Resources/deployments/provisionCompute"
+      ],
+      "resourceGroup": "[parameters('strVaultResourceGroup')]",
+      "properties": {
+        "mode": "Incremental",
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "parameters": {
+          },
+          "variables": {
+          },
+          "resources": [
+            {
+              "type": "Microsoft.RecoveryServices/vaults/backupFabrics/protectionContainers/protectedItems",
+              "name": "[concat(parameters('strVaultName'), '/', variables('backupFabric'), '/', variables('protectionContainer'), '/', variables('protectedItem'))]",
+              "apiVersion": "[variables('vaultApiVersion')]",
+              "location": "[parameters('strLocation')]",
+              "properties": {
+                "protectedItemType": "Microsoft.Compute/virtualMachines",
+                "policyId": "[resourceId('Microsoft.RecoveryServices/vaults/backupPolicies', parameters('strVaultName'), parameters('strBackupPolicyName'))]",
+                "sourceResourceId": "[resourceId(variables('mainResourceGroup'),'Microsoft.Compute/virtualMachines/', parameters('strVmName'))]"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "outputs": {
+  }
+}
