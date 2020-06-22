@@ -146,7 +146,7 @@
     },
     "strSku": {
       "type": "string",
-      "defaultValue": "2016-Datacenter",
+      "defaultValue": "2016-Datacenter-gensecond",
       "metadata": {
         "description": "The SKU of the selected offer and publisher to select for image to use"
       }
@@ -521,7 +521,7 @@
       "WindowsServer": {
         "publisher": "MicrosoftWindowsServer",
         "offer": "WindowsServer",
-        "sku": "2016-Datacenter",
+        "sku": "2016-Datacenter-gensecond",
         "version": "latest"
       },
       "Windows10": {
@@ -591,7 +591,7 @@
             "createOption": "[if(equals(parameters('boolRebuildFromDisks'),variables('true')),'Attach','fromImage')]",
             "managedDisk": {
               "storageAccountType": "[if(equals(parameters('boolRebuildFromDisks'),variables('true')),json('null'),parameters('strOsDiskStorageType'))]",
-              "id": "[if(equals(parameters('boolRebuildFromDisks'),variables('true')),resourceId('Microsoft.Compute/disks',parameters('strExistingOSDiskName')),json('null'))]",
+              "id": "[if(equals(parameters('boolRebuildFromDisks'),variables('true')),resourceId('Microsoft.Compute/disks',parameters('strExistingOSDiskName')),json('null'))]"
             },
             "caching": "[if(equals(parameters('boolRebuildFromDisks'),variables('true')),json('null'),'ReadWrite')]"
           },
@@ -607,7 +607,7 @@
                 "createOption": "[if(equals(parameters('boolRebuildFromDisks'),variables('true')),'Attach','Empty')]",
                 "managedDisk": {
                   "storageAccountType": "[if(equals(parameters('boolRebuildFromDisks'),variables('true')),json('null'),parameters('objDataDisks').disks[copyIndex('dataDisks')].StorageAccountType)]",
-                  "id": "[if(equals(parameters('boolRebuildFromDisks'),variables('true')),resourceId('Microsoft.Compute/disks',parameters('objDataDisks').disks[copyIndex('dataDisks')].ExistingDiskName),json('null'))]",
+                  "id": "[if(equals(parameters('boolRebuildFromDisks'),variables('true')),resourceId('Microsoft.Compute/disks',parameters('objDataDisks').disks[copyIndex('dataDisks')].ExistingDiskName),json('null'))]"
                 }
               }
             }

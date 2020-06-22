@@ -154,7 +154,7 @@
     },
     "strSku": {
       "type": "string",
-      "defaultValue": "2016-Datacenter",
+      "defaultValue": "2016-Datacenter-gensecond",
       "metadata": {
         "group": "VM OS & Image Selection",
         "description": "The SKU of the selected offer and publisher to select for image to use"
