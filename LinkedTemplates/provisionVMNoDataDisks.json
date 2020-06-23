@@ -778,7 +778,17 @@
               }
             },
             "protectedSettings": {
-              "configurationUrlSasToken": "[if(empty(parameters('sstrArtifactsLocationSasToken')),json('null'),parameters('sstrArtifactsLocationSasToken'))]"
+              "configurationArguments": {
+                "storageCredential": {
+                  "userName": "[parameters('sstrStorageUserName')]",
+                  "password": "[parameters('sstrStoragePassword')]"
+                },
+                "adminCredential": {
+                  "userName": "[parameters('strLocalAccountUserName')]",
+                  "password": "[parameters('sstrLocalAccountUserPassword')]"
+                }
+              },
+              "configurationUrlSasToken": "[parameters('sstrArtifactsLocationSasToken')]"
             }
           }
         },
