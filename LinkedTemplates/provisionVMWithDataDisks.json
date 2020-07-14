@@ -146,7 +146,7 @@
     },
     "strSku": {
       "type": "string",
-      "defaultValue": "2016-Datacenter-gensecond",
+      "defaultValue": "2019-Datacenter-gensecond",
       "metadata": {
         "description": "The SKU of the selected offer and publisher to select for image to use"
       }
@@ -521,7 +521,7 @@
       "WindowsServer": {
         "publisher": "MicrosoftWindowsServer",
         "offer": "WindowsServer",
-        "sku": "2016-Datacenter-gensecond",
+        "sku": "2019-Datacenter-gensecond",
         "version": "latest"
       },
       "Windows10": {
