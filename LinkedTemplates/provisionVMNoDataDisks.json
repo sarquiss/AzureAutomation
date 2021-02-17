@@ -581,9 +581,9 @@
       },
       "dependsOn": [
       ],
+      "zones": "[if(parameters('boolAvZoneRequired'), parameters('strAvZone'), json('null'))]",
       "properties": {
         "availabilitySet": "[if(parameters('boolAvSetRequired'), variables('availabilitySet'), json('null'))]",
-        "zones": "[if(parameters('boolAvZoneRequired'), parameters('strAvZone'), json('null'))]",
         "hardwareProfile": {
           "vmSize": "[variables('vmSize')]"
         },
