@@ -41,6 +41,27 @@
         "description": "Specify the size of the VM required. Specify in the format of the supplied default value"
       }
     },
+    "boolAvZoneRequired": {
+      "type": "bool",
+      "defaultValue": false,
+      "metadata": {
+        "group": "VM Configuration",
+        "description": "Whether this server should belong to an Availability Zone. Allowed values are 1,2 or 3"
+      }
+    },
+    "strAvZone": {
+      "type": "string",
+      "defaultValue": "1",
+      "allowedValues": [
+        "1",
+        "2",
+        "3"
+      ],
+      "metadata": {
+        "group": "VM Configuration",
+        "description": "Availbility Zone Number for the VM"
+      }
+    },
     "boolAvSetRequired": {
       "type": "bool",
       "defaultValue": false,
@@ -995,6 +1016,12 @@
           },
           "strAdminUsername": {
             "value": "[parameters('strAdminUsername')]"
+          },
+          "boolAvZoneRequired": {
+            "value": "[parameters('boolAvZoneRequired')]"
+          },
+          "strAvZone": {
+            "value": "[if(parameters('boolAvZoneRequired'), parameters('strAvZone'), variables('emptyString'))]"
           },
           "boolAvSetRequired": {
             "value": "[parameters('boolAvSetRequired')]"
