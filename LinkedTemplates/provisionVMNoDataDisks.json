@@ -582,7 +582,7 @@
       },
       "dependsOn": [
       ],
-      "zones": "[if(parameters('boolAvZoneRequired'), parameters('strAvZone'), json('null'))]",
+      "zones": "[if(parameters('boolAvZoneRequired'), parameters("strAvZone"), json('null'))]",
       "properties": {
         "availabilitySet": "[if(parameters('boolAvSetRequired'), variables('availabilitySet'), json('null'))]",
         "hardwareProfile": {
