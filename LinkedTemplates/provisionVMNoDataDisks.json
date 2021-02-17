@@ -518,6 +518,7 @@
   "variables": {
     "domainJoinOptions": "3",
     "vmSize": "[parameters('strVmSize')]",
+    "zone": "[parameters('strAvZone')]",
     "true": true,
     "windowsConfiguration": {
       "timeZone": "[parameters('strTimeZone')]"
@@ -582,7 +583,7 @@
       },
       "dependsOn": [
       ],
-      "zones": "[if(parameters('boolAvZoneRequired'), parameters("strAvZone"), json('null'))]",
+      "zones": "[if(parameters('boolAvZoneRequired'), variables('zone'), json('null'))]",
       "properties": {
         "availabilitySet": "[if(parameters('boolAvSetRequired'), variables('availabilitySet'), json('null'))]",
         "hardwareProfile": {
