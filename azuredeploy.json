@@ -52,12 +52,6 @@
     "strAvZone": {
       "type": "string",
       "defaultValue": "1",
-      "allowedValues": [
-        "1",
-        "2",
-        "3",
-        "null"
-      ],
       "metadata": {
         "group": "VM Configuration",
         "description": "Availbility Zone Number for the VM"
